@@ -13,10 +13,9 @@ function __eval(s) {
   style("*", { fontFamily: "monospace" });
   style("#app", { height: "100%", display: "flex", flexDirection: "column" });
   isIE && style("*", { fontSize: "11px" });
-  style(".textarea", { flexGrow: "1" });
   style("textarea", {
     width: "100%",
-    height: "100%",
+    height: "calc(50% - 16px)",
     resize: "vertical",
     tabSize: "2",
   });
@@ -30,9 +29,7 @@ function __eval(s) {
   style("#buttons > *", { margin: "5px 5px 5px 0" });
 
   var app = h("div", { id: "app" }, [
-    h("div", { className: "textarea" }, [
-      h("textarea", { id: "t-out", readOnly: true }),
-    ]),
+    h("textarea", { id: "t-out", readOnly: true }),
     h("div", { id: "buttons" }, [
       h("span", { className: "checkbox" }, [
         h("input", { id: "i-time", type: "checkbox" }),
@@ -42,13 +39,11 @@ function __eval(s) {
       h("button", { id: "b-last", onclick: last, disabled: true }, "last"),
       h("button", { id: "b-run", onclick: run, disabled: true }, "run"),
     ]),
-    h("div", { className: "textarea" }, [
-      h("textarea", {
-        id: "t-in",
-        oninput: handleInput,
-        onkeydown: handleKeyDown,
-      }),
-    ]),
+    h("textarea", {
+      id: "t-in",
+      oninput: handleInput,
+      onkeydown: handleKeyDown,
+    }),
   ]);
 
   function run() {
@@ -139,7 +134,7 @@ function __eval(s) {
   var print = (function () {
     var jsonReplacer = function (k, a) {
       if (typeof a === "function")
-        return "[function " + a.constructor.name + "]";
+        return "[function " + (a.constructor.name || "Function") + "]";
       if (typeof a === "number")
         return isNaN(a) || !isFinite(a) ? String(a) : a;
       if (typeof a === "boolean") return a;
@@ -191,4 +186,8 @@ function __eval(s) {
 
   document.body.appendChild(app);
   load();
+
+  var buttonsHeight = get("buttons").offsetHeight;
+  buttonsHeight !== 32 &&
+    style("textarea", { height: "calc(50% - " + buttonsHeight / 2 + "px)" });
 })();
