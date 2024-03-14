@@ -39,7 +39,7 @@ function __eval(s) {
     h("textarea", {
       id: "t-in",
       rows: 8,
-      onkeyup: handleKeyUp,
+      oninput: handleInput,
       onkeydown: handleKeyDown,
     }),
   ]);
@@ -106,7 +106,7 @@ function __eval(s) {
     get("b-last", "button").disabled = false;
   }
 
-  function handleKeyUp(ev) {
+  function handleInput(ev) {
     get("b-run", "button").disabled = !ev.target.value;
   }
 
