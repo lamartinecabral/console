@@ -131,38 +131,42 @@ function __eval(s) {
 
   var print = (function () {
     var jsonReplacer = function (k, a) {
-      if (typeof a === "bigint") return String(a);
       if (typeof a === "function")
-        return String(a).substring(0, k ? 70 : undefined);
-      if (k) return a;
+        return "[function " + a.constructor.name + "]";
+      if (typeof a === "number")
+        return isNaN(a) || !isFinite(a) ? String(a) : a;
+      if (typeof a === "boolean") return a;
       if (typeof a !== "object") return String(a);
+      if (k || !a) return a;
       var b = Array.isArray(a) ? [] : {};
       for (var i in a) {
         if (!a[i] || typeof a[i] !== "object") b[i] = a[i];
         else if (Array.isArray(a[i])) b[i] = a[i];
-        else if (a[i].constructor === Object) b[i] = a[i];
+        else if (!a[i].constructor || a[i].constructor === Object) b[i] = a[i];
         else b[i] = String(a[i]);
       }
       return b;
     };
-    var o2s = function (obj) {
-      return obj && typeof obj === "object"
-        ? JSON.stringify(obj, jsonReplacer, 2)
-        : String(obj);
+    var obj2str = function (obj) {
+      if (obj && typeof obj === "object") {
+        try {
+          return JSON.stringify(obj, jsonReplacer, 2);
+        } catch (_) {
+          try {
+            return String(obj);
+          } catch (_) {
+            return "[object unknown]";
+          }
+        }
+      }
+      return String(obj);
     };
     return function (args) {
       var outValue = get("t-out", "textarea").value;
       setOut(
-        outValue +
-          (outValue ? "\n" : "") +
+        (outValue ? outValue + "\n" : outValue) +
           (args.length === 1 ? [args[0]] : Array.apply(null, args))
-            .map(function (a) {
-              try {
-                return o2s(a);
-              } catch (_) {
-                return a;
-              }
-            })
+            .map(obj2str)
             .join(" ")
       );
       get("t-out").scrollTop = get("t-out").scrollHeight;
