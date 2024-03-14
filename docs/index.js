@@ -11,24 +11,30 @@ function __eval(s) {
     get = iuai.getElem;
 
   style("*", { fontFamily: "monospace" });
-  style("#app", { display: "flex", flexDirection: "column" });
+  style("#app", { height: "100%", display: "flex", flexDirection: "column" });
   isIE && style("*", { fontSize: "11px" });
-  style("textarea", { width: "100%", resize: "vertical", tabSize: "2" });
-  isIE && style("textarea", { width: "calc(100vw - 16px)" });
-  isIE || style("textarea", { width: "-webkit-fill-available" });
-  style(".cbox", { display: "inline-flex", alignItems: "center" });
-  style("#bt", {
+  style(".textarea", { flexGrow: "1" });
+  style("textarea", {
+    width: "100%",
+    height: "100%",
+    resize: "vertical",
+    tabSize: "2",
+  });
+  style(".checkbox", { display: "inline-flex", alignItems: "center" });
+  style("#buttons", {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "flex-end",
     flexDirection: "row-reverse",
   });
-  style("#bt > *", { margin: "5px 5px 5px 0" });
+  style("#buttons > *", { margin: "5px 5px 5px 0" });
 
   var app = h("div", { id: "app" }, [
-    h("textarea", { id: "t-out", rows: 14, readOnly: true }, []),
-    h("div", { id: "bt" }, [
-      h("span", { className: "cbox" }, [
+    h("div", { className: "textarea" }, [
+      h("textarea", { id: "t-out", readOnly: true }),
+    ]),
+    h("div", { id: "buttons" }, [
+      h("span", { className: "checkbox" }, [
         h("input", { id: "i-time", type: "checkbox" }),
         h("span", "time"),
       ]),
@@ -36,12 +42,13 @@ function __eval(s) {
       h("button", { id: "b-last", onclick: last, disabled: true }, "last"),
       h("button", { id: "b-run", onclick: run, disabled: true }, "run"),
     ]),
-    h("textarea", {
-      id: "t-in",
-      rows: 8,
-      oninput: handleInput,
-      onkeydown: handleKeyDown,
-    }),
+    h("div", { className: "textarea" }, [
+      h("textarea", {
+        id: "t-in",
+        oninput: handleInput,
+        onkeydown: handleKeyDown,
+      }),
+    ]),
   ]);
 
   function run() {
