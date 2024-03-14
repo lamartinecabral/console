@@ -130,9 +130,24 @@ function __eval(s) {
   }
 
   var print = (function () {
+    var jsonReplacer = function (k, a) {
+      if (typeof a === "bigint") return String(a);
+      if (typeof a === "function")
+        return String(a).substring(0, k ? 70 : undefined);
+      if (k) return a;
+      if (typeof a !== "object") return String(a);
+      var b = Array.isArray(a) ? [] : {};
+      for (var i in a) {
+        if (!a[i] || typeof a[i] !== "object") b[i] = a[i];
+        else if (Array.isArray(a[i])) b[i] = a[i];
+        else if (a[i].constructor === Object) b[i] = a[i];
+        else b[i] = String(a[i]);
+      }
+      return b;
+    };
     var o2s = function (obj) {
-      return obj && (obj.constructor === Object || obj.constructor === Array)
-        ? JSON.stringify(obj, null, 2)
+      return obj && typeof obj === "object"
+        ? JSON.stringify(obj, jsonReplacer, 2)
         : String(obj);
     };
     return function (args) {
