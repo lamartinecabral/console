@@ -10,6 +10,10 @@ function __eval(s) {
     style = iuai.style,
     get = iuai.getElem;
 
+  /*
+   * CSS
+   */
+
   style("*", { fontFamily: "monospace" });
   style("#app", { display: "flex", flexDirection: "column" });
   isIE && style("*", { fontSize: "11px" });
@@ -19,6 +23,7 @@ function __eval(s) {
   style(".command .col2", { color: "gray" });
   style(".result .col2", { background: "#eee" });
   style(".col2 pre", { whiteSpace: "pre-wrap" });
+  style("pre", { margin: "0" });
   style(".checkbox", { display: "inline-flex", alignItems: "center" });
   style("#buttons", {
     display: "inline-flex",
@@ -33,39 +38,45 @@ function __eval(s) {
     tabSize: "2",
   });
 
-  var app = h("div", { id: "app" }, [
-    h("div", { id: "d-out" }, [h("table", { id: "t-out" }, [])]),
-    h("div", { id: "buttons" }, [
-      h("span", { className: "checkbox", title: "Show execution time" }, [
-        h("input", { id: "i-time", type: "checkbox" }),
-        h("span", "time"),
-      ]),
-      h(
-        "button",
-        {
-          id: "b-clear",
-          onclick: clear,
-          disabled: true,
-          title: "Clear log",
-        },
-        "clear"
-      ),
-      h(
-        "button",
-        {
-          id: "b-last",
-          onclick: last,
-          disabled: true,
-          title: "Restore last script",
-        },
-        "last"
-      ),
-      h(
-        "button",
-        { id: "b-run", onclick: run, disabled: true, title: "Run script" },
-        "run"
-      ),
+  /*
+   * HTML
+   */
+
+  var buttons = h("div", { id: "buttons" }, [
+    h("span", { className: "checkbox", title: "Show execution time" }, [
+      h("input", { id: "i-time", type: "checkbox" }),
+      h("span", "time"),
     ]),
+    h(
+      "button",
+      {
+        id: "b-clear",
+        onclick: clear,
+        disabled: true,
+        title: "Clear log",
+      },
+      "clear"
+    ),
+    h(
+      "button",
+      {
+        id: "b-last",
+        onclick: last,
+        disabled: true,
+        title: "Restore last script",
+      },
+      "last"
+    ),
+    h(
+      "button",
+      { id: "b-run", onclick: run, disabled: true, title: "Run script" },
+      "run"
+    ),
+  ]);
+
+  var app = h("div", { id: "app" }, [
+    h("div", { id: "d-out" }, [h("table", { id: "t-out" })]),
+    buttons,
     h("textarea", {
       id: "t-in",
       rows: 8,
@@ -74,39 +85,32 @@ function __eval(s) {
     }),
   ]);
 
+  /*
+   * JS
+   */
+
   function run() {
     var text = get("t-in", "textarea").value;
     pushCommand(text);
 
-    var showTime = get("i-time", "input").checked;
     var start = +new Date();
     try {
-      var res = __eval(text);
-      console.log(res);
+      console.log(__eval(text));
     } catch (err) {
       console.error(err);
     }
-    if (showTime) {
-      var end = +new Date();
-      console.log(end - start + "ms");
+    if (get("i-time", "input").checked) {
+      console.log(+new Date() - start + "ms");
     }
 
-    save();
+    hist.save();
     setIn("");
   }
 
-  var hist = [],
-    hist_i = 0;
   function last() {
-    if (hist_i) setIn(hist[--hist_i]);
-    if (!hist_i) get("b-last", "button").disabled = true;
+    if (hist.idx) setIn(hist.arr[--hist.idx]);
+    if (!hist.idx) get("b-last", "button").disabled = true;
   }
-
-  var _log = console.log;
-  console.log = function () {
-    _log.apply(console, arguments);
-    print(arguments);
-  };
 
   var _clear = console.clear;
   function clear() {
@@ -117,44 +121,17 @@ function __eval(s) {
   }
   console.clear = clear;
 
+  var _log = console.log;
+  console.log = function () {
+    _log.apply(console, arguments);
+    pushResult(argsToString(arguments));
+  };
+
   var _error = console.error;
   console.error = function () {
     _error.apply(console, arguments);
-    print((arguments[0] || {}).message ? [arguments[0].message] : arguments);
+    pushResult(argsToString(arguments));
   };
-
-  function setIn(text) {
-    get("t-in", "textarea").value = text;
-    get("b-run", "button").disabled = !text;
-  }
-
-  function pushResult(text) {
-    get("t-out", "table").appendChild(
-      h("tr", { className: "result" }, [
-        h("td", { className: "col1" }, "<"),
-        h("td", { className: "col2" }, [h("pre", text || "")]),
-      ])
-    );
-    get("b-clear", "button").disabled = false;
-  }
-
-  function pushCommand(text) {
-    if (!text) throw new TypeError("command should not be empty");
-    get("t-out", "table").appendChild(
-      h("tr", { className: "command" }, [
-        h("td", { className: "col1" }, ">"),
-        h("td", { className: "col2" }, [h("pre", text)]),
-      ])
-    );
-    addToHist(text);
-  }
-
-  function addToHist(text) {
-    if (!hist.length || hist[hist.length - 1] !== text)
-      hist_i = hist.push(text);
-    else hist_i = hist.length;
-    get("b-last", "button").disabled = false;
-  }
 
   function handleInput(ev) {
     get("b-run", "button").disabled = !ev.target.value;
@@ -179,7 +156,39 @@ function __eval(s) {
     }
   }
 
-  var print = (function () {
+  function setIn(text) {
+    get("t-in", "textarea").value = text;
+    get("b-run", "button").disabled = !text;
+  }
+
+  function pushResult(text) {
+    get("t-out", "table").appendChild(
+      h("tr", { className: "result" }, [
+        h("td", { className: "col1" }, "<"),
+        h("td", { className: "col2" }, [h("pre", text || "")]),
+      ])
+    );
+    get("b-clear", "button").disabled = false;
+    document.body.scrollTop = document.body.scrollHeight;
+  }
+
+  function pushCommand(text) {
+    if (!text) throw new TypeError("command should not be empty");
+    get("t-out", "table").appendChild(
+      h("tr", { className: "command" }, [
+        h("td", { className: "col1" }, ">"),
+        h("td", { className: "col2" }, [h("pre", text)]),
+      ])
+    );
+    hist.add(text);
+    get("b-last", "button").disabled = false;
+  }
+
+  /*
+   * UTILS
+   */
+
+  var argsToString = (function () {
     var jsonReplacer = function (k, a) {
       if (typeof a === "function")
         return "[function " + (a.constructor.name || "Function") + "]";
@@ -212,24 +221,34 @@ function __eval(s) {
       return String(obj);
     };
     return function (args) {
-      pushResult(
-        (args.length === 1 ? [args[0]] : Array.apply(null, args))
-          .map(obj2str)
-          .join(" ")
-      );
-      document.body.scrollTop = document.body.scrollHeight;
+      return (args.length === 1 ? [args[0]] : Array.apply(null, args))
+        .map(obj2str)
+        .join(" ");
     };
   })();
 
-  function load() {
-    hist = JSON.parse(localStorage.getItem("console") || "[]");
-    hist_i = hist.length;
-    get("b-last", "button").disabled = !hist_i;
-  }
-  function save() {
-    localStorage.setItem("console", JSON.stringify(hist.slice(-50)));
-  }
+  var hist = {
+    arr: [""].slice(0, 0),
+    idx: 0,
+    add: function (text) {
+      if (!this.arr.length || this.arr[this.arr.length - 1] !== text)
+        this.idx = this.arr.push(text);
+      else this.idx = this.arr.length;
+    },
+    load: function () {
+      this.arr = JSON.parse(localStorage.getItem("console") || "[]");
+      this.idx = this.arr.length;
+    },
+    save: function () {
+      localStorage.setItem("console", JSON.stringify(this.arr.slice(-50)));
+    },
+  };
+
+  /*
+   * INIT
+   */
 
   document.body.appendChild(app);
-  load();
+  hist.load();
+  get("b-last", "button").disabled = !hist.idx;
 })();
