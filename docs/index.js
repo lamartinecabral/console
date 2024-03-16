@@ -11,14 +11,14 @@ function __eval(s) {
     get = iuai.getElem;
 
   style("*", { fontFamily: "monospace" });
-  style("#app", { height: "100%", display: "flex", flexDirection: "column" });
+  style("#app", { display: "flex", flexDirection: "column" });
   isIE && style("*", { fontSize: "11px" });
-  style("textarea", {
-    width: "100%",
-    height: "calc(50% - 16px)",
-    resize: "vertical",
-    tabSize: "2",
-  });
+  style("#d-out", { overflow: "auto" });
+  style("#t-out", { width: "100%" });
+  style(".col1", { width: "1ch", userSelect: "none", verticalAlign: "top" });
+  style(".command .col2", { color: "gray" });
+  style(".result .col2", { background: "#eee" });
+  style(".col2 pre", { whiteSpace: "pre-wrap" });
   style(".checkbox", { display: "inline-flex", alignItems: "center" });
   style("#buttons", {
     display: "inline-flex",
@@ -27,20 +27,48 @@ function __eval(s) {
     flexDirection: "row-reverse",
   });
   style("#buttons > *", { margin: "5px 5px 5px 0" });
+  style("textarea", {
+    width: "100%",
+    resize: "vertical",
+    tabSize: "2",
+  });
 
   var app = h("div", { id: "app" }, [
-    h("textarea", { id: "t-out", readOnly: true }),
+    h("div", { id: "d-out" }, [h("table", { id: "t-out" }, [])]),
     h("div", { id: "buttons" }, [
-      h("span", { className: "checkbox" }, [
+      h("span", { className: "checkbox", title: "Show execution time" }, [
         h("input", { id: "i-time", type: "checkbox" }),
         h("span", "time"),
       ]),
-      h("button", { id: "b-clear", onclick: clear, disabled: true }, "clear"),
-      h("button", { id: "b-last", onclick: last, disabled: true }, "last"),
-      h("button", { id: "b-run", onclick: run, disabled: true }, "run"),
+      h(
+        "button",
+        {
+          id: "b-clear",
+          onclick: clear,
+          disabled: true,
+          title: "Clear log",
+        },
+        "clear"
+      ),
+      h(
+        "button",
+        {
+          id: "b-last",
+          onclick: last,
+          disabled: true,
+          title: "Restore last script",
+        },
+        "last"
+      ),
+      h(
+        "button",
+        { id: "b-run", onclick: run, disabled: true, title: "Run script" },
+        "run"
+      ),
     ]),
     h("textarea", {
       id: "t-in",
+      rows: 8,
       oninput: handleInput,
       onkeydown: handleKeyDown,
     }),
@@ -48,19 +76,21 @@ function __eval(s) {
 
   function run() {
     var text = get("t-in", "textarea").value;
-    if (!text) return;
+    pushCommand(text);
 
+    var showTime = get("i-time", "input").checked;
     var start = +new Date();
     try {
-      var res = __eval("(" + text + ")");
+      var res = __eval(text);
       console.log(res);
     } catch (err) {
       console.error(err);
     }
-    var end = +new Date();
-    if (get("i-time", "input").checked) console.log(end - start + "ms");
+    if (showTime) {
+      var end = +new Date();
+      console.log(end - start + "ms");
+    }
 
-    addToHist(text);
     save();
     setIn("");
   }
@@ -81,7 +111,9 @@ function __eval(s) {
   var _clear = console.clear;
   function clear() {
     _clear.apply(console, arguments);
-    setOut("");
+    var out = get("t-out", "table");
+    while (out.firstChild) out.removeChild(out.firstChild);
+    get("b-clear", "button").disabled = true;
   }
   console.clear = clear;
 
@@ -96,9 +128,25 @@ function __eval(s) {
     get("b-run", "button").disabled = !text;
   }
 
-  function setOut(text) {
-    get("t-out", "textarea").value = text;
-    get("b-clear", "button").disabled = !text;
+  function pushResult(text) {
+    get("t-out", "table").appendChild(
+      h("tr", { className: "result" }, [
+        h("td", { className: "col1" }, "<"),
+        h("td", { className: "col2" }, [h("pre", text || "")]),
+      ])
+    );
+    get("b-clear", "button").disabled = false;
+  }
+
+  function pushCommand(text) {
+    if (!text) throw new TypeError("command should not be empty");
+    get("t-out", "table").appendChild(
+      h("tr", { className: "command" }, [
+        h("td", { className: "col1" }, ">"),
+        h("td", { className: "col2" }, [h("pre", text)]),
+      ])
+    );
+    addToHist(text);
   }
 
   function addToHist(text) {
@@ -164,14 +212,12 @@ function __eval(s) {
       return String(obj);
     };
     return function (args) {
-      var outValue = get("t-out", "textarea").value;
-      setOut(
-        (outValue ? outValue + "\n" : outValue) +
-          (args.length === 1 ? [args[0]] : Array.apply(null, args))
-            .map(obj2str)
-            .join(" ")
+      pushResult(
+        (args.length === 1 ? [args[0]] : Array.apply(null, args))
+          .map(obj2str)
+          .join(" ")
       );
-      get("t-out").scrollTop = get("t-out").scrollHeight;
+      document.body.scrollTop = document.body.scrollHeight;
     };
   })();
 
@@ -186,8 +232,4 @@ function __eval(s) {
 
   document.body.appendChild(app);
   load();
-
-  var buttonsHeight = get("buttons").offsetHeight;
-  buttonsHeight !== 32 &&
-    style("textarea", { height: "calc(50% - " + buttonsHeight / 2 + "px)" });
 })();
