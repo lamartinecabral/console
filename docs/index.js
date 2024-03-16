@@ -130,7 +130,7 @@ function __eval(s) {
   var _error = console.error;
   console.error = function () {
     _error.apply(console, arguments);
-    pushResult(argsToString(arguments));
+    pushResult(String(arguments[0]));
   };
 
   function handleInput(ev) {
