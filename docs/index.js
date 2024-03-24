@@ -93,18 +93,20 @@ function __eval(s) {
     var text = get("t-in", "textarea").value;
     pushCommand(text);
 
-    var start = +new Date();
-    try {
-      console.log(__eval(text));
-    } catch (err) {
-      console.error(err);
-    }
-    if (get("i-time", "input").checked) {
-      console.log(+new Date() - start + "ms");
-    }
+    setTimeout(function () {
+      var start = +new Date();
+      try {
+        console.log(__eval(text));
+      } catch (err) {
+        console.error(err);
+      }
+      if (get("i-time", "input").checked) {
+        console.log(+new Date() - start + "ms");
+      }
 
-    hist.save();
-    setIn("");
+      hist.save();
+      setIn("");
+    }, 0);
   }
 
   function last() {
