@@ -128,5 +128,21 @@
     );
   };
 
+  test.render = function (value) {
+    if (value === undefined) value = 1e5;
+    var start = Date.now();
+    for (var i = 0; i < 1e5; ++i) {
+      var div = document.createElement("div");
+      document.body.appendChild(div);
+      document.body.removeChild(div);
+    }
+    return (
+      value +
+      " div elements were added and removed. It took " +
+      (Date.now() - start) +
+      "ms"
+    );
+  };
+
   (("undefined" != typeof self && self) || globalThis).__test = test;
 })();
