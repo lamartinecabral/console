@@ -5,12 +5,13 @@
 
   test.feat = function () {
     return [
-      "/[a-z]/g", //            4
+      "/[a-z]/g", //             4
       "CSS", //                 28
       "URL", //                 32
       "Promise", //             33
       "for(var x of []){}", //  38
       "Map", //                 38
+      "ServiceWorker", //       40
       "`1`", //                 41
       "0b11", //                41
       "fetch", //               42
@@ -29,8 +30,8 @@
       "1n", //                  67
       "0??1", //                80
       "var x=0;x||=1", //       85
-      "structuredClone.name", //98
-      "[].toSorted.name", //    110
+      "structuredClone", //     98
+      "[].toSorted.name", //   110
     ].reduce(function (a, val) {
       try {
         if (typeof val === "string") {

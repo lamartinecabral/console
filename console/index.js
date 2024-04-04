@@ -1,10 +1,6 @@
 // @ts-check
 
-function __eval(s) {
-  return eval(s);
-}
-
-(function () {
+(function (env) {
   var isIE = !!navigator.userAgent.match(/(msie |rv:)(\d+(\.?_?\d+)+)/i);
   var h = iuai.elem,
     style = iuai.style,
@@ -42,12 +38,7 @@ function __eval(s) {
    * HTML
    */
 
-  var buttons = h("div", { id: "buttons" }, [
-    h("span", { className: "checkbox", title: "Show execution time" }, [
-      h("input", { id: "i-time", type: "checkbox" }),
-      h("span", "time"),
-    ]),
-    h(
+  var clearButton = h(
       "button",
       {
         id: "b-clear",
@@ -57,7 +48,7 @@ function __eval(s) {
       },
       "clear"
     ),
-    h(
+    lastButton = h(
       "button",
       {
         id: "b-last",
@@ -67,16 +58,23 @@ function __eval(s) {
       },
       "last"
     ),
-    h(
+    runButton = h(
       "button",
       { id: "b-run", onclick: run, disabled: true, title: "Run script" },
       "run"
-    ),
-  ]);
+    );
 
   var app = h("div", { id: "app" }, [
     h("div", { id: "d-out" }, [h("table", { id: "t-out" })]),
-    buttons,
+    h("div", { id: "buttons" }, [
+      h("span", { className: "checkbox", title: "Show execution time" }, [
+        h("input", { id: "i-time", type: "checkbox" }),
+        h("span", "time"),
+      ]),
+      clearButton,
+      lastButton,
+      runButton,
+    ]),
     h("textarea", {
       id: "t-in",
       rows: 8,
@@ -96,7 +94,7 @@ function __eval(s) {
     setTimeout(function () {
       var start = +new Date();
       try {
-        console.log(__eval(text));
+        console.log(env.eval(text));
       } catch (err) {
         console.error(err);
       }
@@ -198,6 +196,8 @@ function __eval(s) {
         return isNaN(a) || !isFinite(a) ? String(a) : a;
       if (typeof a === "boolean") return a;
       if (typeof a !== "object") return String(a);
+      if (window.Promise && window.Promise === a.constructor)
+        return "[object Promise]";
       if (k || !a) return a;
       var b = Array.isArray(a) ? [] : {};
       for (var i in a) {
@@ -253,4 +253,8 @@ function __eval(s) {
   document.body.appendChild(app);
   hist.load();
   get("b-last", "button").disabled = !hist.idx;
-})();
+})({
+  eval: function (s) {
+    return eval(s);
+  },
+});

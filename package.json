@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "python3 -m http.server -d docs"
+    "start": "python3 -m http.server"
   },
   "dependencies": {
     "iuai": "^0.6.0"
