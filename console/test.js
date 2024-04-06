@@ -4,45 +4,53 @@
   var test = {};
 
   test.feat = function () {
-    return [
-      "/[a-z]/g", //             4
-      "CSS", //                 28
-      "URL", //                 32
-      "Promise", //             33
-      "for(var x of []){}", //  38
-      "Map", //                 38
-      "ServiceWorker", //       40
-      "`1`", //                 41
-      "0b11", //                41
-      "fetch", //               42
-      "()=>{}", //              45
-      "[].find.name", //        45
-      "Object.assign.name", //  45
-      "[...[]]", //             46
-      "function f(...x){}", //  47
-      "let x=1", //             49
-      "class C{}", //           49
-      "var {x} = {x:1}", //     49
-      "2**3", //                52
-      "document.append.name", //54
-      "async()=>await 1", //    55
-      "CSS.supports.name", //   61
-      "1n", //                  67
-      "0??1", //                80
-      "var x=0;x||=1", //       85
-      "structuredClone", //     98
-      "[].toSorted.name", //   110
-    ].reduce(function (a, val) {
+    var reducer = function (acc, tst) {
       try {
-        if (typeof val === "string") {
-          eval("(function(){" + val + "})()");
-          a.push("OK " + val);
-        } else a.push("" + val);
+        if (typeof tst === "string") {
+          eval("(function(){" + tst + "})()");
+          acc.push("OK " + tst);
+        } else acc.push("" + tst);
       } catch (e) {
-        a.push(val + " " + e.name);
+        acc.push(tst + " " + e.name);
       }
-      return a;
-    }, []);
+      return acc;
+    };
+
+    return [
+      "/[a-z]/g", //              4
+      "CSS", //                  28
+      "URL", //                  32
+      "Promise", //              33
+      "for(var x of []){}", //   38
+      "Map", //                  38
+      "function* f(){}", //      39
+      "ServiceWorker", //        40
+      "`1`", //                  41
+      "0b11", //                 41
+      "''.includes.name", //     41
+      "fetch", //                42
+      "()=>{}", //               45
+      "[].find.name", //         45
+      "Object.assign.name", //   45
+      "[...[]]", //              46
+      "function f(...x){}", //   47
+      "[].includes.name", //     47
+      "let x=1", //              49
+      "class C{}", //            49
+      "var {x} = {x:1}", //      49
+      "2**3", //                 52
+      "document.append.name", // 54
+      "Object.entries.name", //  54
+      "async()=>await 1", //     55
+      "CSS.supports.name", //    61
+      "import(0).catch(_=>0)", //63
+      "1n", //                   67
+      "0??1", //                 80
+      "null?.x", //              80
+      "var x=0;x||=1", //        85
+      "structuredClone", //      98
+      "[].toSorted.name", //    110
+    ].reduce(reducer, []);
   };
 
   function findDivisorSync(value) {
